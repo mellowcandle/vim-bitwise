@@ -29,11 +29,13 @@ function! s:RunShellCommand(cmdline)
   endfor
   botright new
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
+  call setline(1, '# ' . a:cmdline)
+  call setline(2,substitute(getline(2),'.','=','g'))
   execute '$read !'. expanded_cmdline
   setlocal nomodifiable
   1
 endfunction
 
-command! -nargs=1 Bitwise call s:RunShellCommand('bitwise --no-color '.<q-args>)
+command! -nargs=+ Bitwise call s:RunShellCommand('bitwise --no-color '.<q-args>)
 
 " vim: ts=2 sw=2 et
