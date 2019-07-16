@@ -37,5 +37,5 @@ function! s:RunShellCommand(cmdline)
 endfunction
 
 command! -nargs=+ Bitwise call s:RunShellCommand('bitwise --no-color '.<q-args>)
-
+noremap <silent> <leader>b :call <SID>RunShellCommand('bitwise --no-color '.expand('<cword>'))<CR>
 " vim: ts=2 sw=2 et
