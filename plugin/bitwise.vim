@@ -36,6 +36,20 @@ function! s:RunShellCommand(cmdline)
   1
 endfunction
 
+function! s:Vwrapper(type)
+  echo a:type
+  if a:type ==# 'v'
+        normal! `<v`>y
+    elseif a:type ==# 'char'
+        normal! `[v`]y
+    else
+        return
+    endif
+    call s:RunShellCommand('bitwise --no-color '.expand(@@))
+endfunction
+"0x30
 command! -nargs=+ Bitwise call s:RunShellCommand('bitwise --no-color '.<q-args>)
 noremap <silent> <leader>b :call <SID>RunShellCommand('bitwise --no-color '.expand('<cword>'))<CR>
+vnoremap <silent> <leader>b  :<c-u>call <SID>Vwrapper(visualmode())<cr>
+
 " vim: ts=2 sw=2 et
