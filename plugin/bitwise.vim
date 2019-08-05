@@ -16,21 +16,28 @@ endif
 " Make sure the plug-in is only loaded once.
 let g:loaded_vim_bitwise = 1
 
+
 command! -nargs=+ Bitwise call s:RunShellCommand('bitwise --no-color '.<q-args>)
 nnoremap <leader>b :set operatorfunc=<SID>BitwiseOperator<cr>g@
 vnoremap <silent> <leader>b  :<c-u>call <SID>BitwiseOperator(visualmode())<cr>
 
+function! Chomp(string)
+    return substitute(a:string, '\n\+$', '', '')
+endfunction
+
 function! s:BitwiseOperator(type)
   let saved_unnamed_register = @@
-
+  echom a:type
   if a:type ==# 'v'
+        normal! `<v`>y
+    elseif a:type ==# 'V'
         normal! `<v`>y
     elseif a:type ==# 'char'
         normal! `[v`]y
     else
         return
     endif
-
+  let @@ = Chomp(@@)
   botright new
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
   call setline(1, '# ' . shellescape(@@))
@@ -39,6 +46,5 @@ function! s:BitwiseOperator(type)
   setlocal nomodifiable
   let @@ = saved_unnamed_register
 endfunction
-"0x30
 
 " vim: ts=2 sw=2 et
