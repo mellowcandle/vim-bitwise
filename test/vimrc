@@ -1,0 +1,19 @@
+" Minimal rc used by the test suite. Loads only vim-bitwise.
+set nocompatible
+set noswapfile nobackup nowritebackup
+set shortmess+=F
+let &runtimepath = expand('<sfile>:p:h:h') . ',' . &runtimepath
+" Development convenience: if bitwise is not installed system-wide, fall back
+" to $BITWISE, then to a sibling checkout (../bitwise/bitwise) next to this
+" repo. The test suite overrides this with its own stub.
+if !executable('bitwise')
+  for s:candidate in [$BITWISE, expand('<sfile>:p:h:h:h') . '/bitwise/bitwise']
+    if !empty(s:candidate) && executable(s:candidate)
+      let g:bitwise_executable = s:candidate
+      break
+    endif
+  endfor
+endif
+
+filetype plugin on
+syntax enable

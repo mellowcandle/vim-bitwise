@@ -1,0 +1,27 @@
+#!/bin/sh
+# Minimal stand-in for the real bitwise binary, used by the test suite.
+# Understands the same invocation shape the plugin uses:
+#   bitwise --no-color <expression>
+for arg in "$@"; do
+  case "$arg" in
+    --version) echo "bitwise stub 0.0"; exit 0 ;;
+    --no-color) ;;
+    *) expr_in="$arg" ;;
+  esac
+done
+
+if [ -z "$expr_in" ]; then
+  echo "no expression" >&2
+  exit 2
+fi
+
+case "$expr_in" in
+  fail) echo "bitwise: parse error" >&2; exit 1 ;;
+  empty) exit 0 ;;
+esac
+
+echo "Decimal: [$expr_in]"
+echo "Hexadecimal: 0x30"
+echo "Binary: 00110000"
+echo ""
+echo ""
