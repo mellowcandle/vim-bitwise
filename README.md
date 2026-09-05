@@ -5,6 +5,15 @@ Vim and Neovim integration for [Bitwise](https://github.com/mellowcandle/bitwise
 Evaluate an expression from your buffer and see its decimal, hexadecimal,
 octal and binary representations without leaving the editor.
 
+<p align="center">
+  <img src="assets/demo.gif" alt="The hover showing the value under the cursor, then the operator over an expression" width="780">
+</p>
+
+<p align="center">
+  <sub>The cursor walks down the literals and the hover follows; <code>&lt;C-w&gt;z</code> dismisses it;
+  <code>gbi(</code> runs the operator over <code>(3 &lt;&lt; 4 | 1 &lt;&lt; 2)</code>.</sub>
+</p>
+
 ## Features
 
 * **Hover** — rest the cursor on a number in normal mode and its
