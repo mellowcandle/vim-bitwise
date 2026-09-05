@@ -1,0 +1,269 @@
+*bitwise.txt*   Bitwise integration for Vim and Neovim        *vim-bitwise*
+
+Author:  Ramon Fried <rfried.dev@gmail.com>
+License: GPL-3.0
+Repo:    https://github.com/mellowcandle/vim-bitwise
+
+==============================================================================
+CONTENTS                                                    *bitwise-contents*
+
+    1. Introduction ......................... |bitwise-introduction|
+    2. Requirements ......................... |bitwise-requirements|
+    3. Hover ................................ |bitwise-hover|
+    4. Commands ............................. |bitwise-commands|
+    5. Mappings ............................. |bitwise-mappings|
+    6. Configuration ........................ |bitwise-configuration|
+    7. Functions ............................ |bitwise-functions|
+    8. Neovim ............................... |bitwise-neovim|
+    9. Troubleshooting ...................... |bitwise-troubleshooting|
+
+==============================================================================
+1. INTRODUCTION                                         *bitwise-introduction*
+
+vim-bitwise runs bitwise (https://github.com/mellowcandle/bitwise) on an
+expression taken from your buffer and shows the decimal, hexadecimal, octal
+and binary representations without leaving the editor.
+
+Works in Vim 7.4+ and Neovim.
+
+==============================================================================
+2. REQUIREMENTS                                         *bitwise-requirements*
+
+The `bitwise` binary must be installed and reachable through $PATH, or
+pointed at with |g:bitwise_executable|. It is packaged for Debian and Ubuntu
+(`apt install bitwise`) and can be built from source: >
+
+    https://github.com/mellowcandle/bitwise
+<
+
+The binary is looked up when you run a command, not when the plugin loads, so
+installing bitwise later does not require restarting the editor.
+
+==============================================================================
+3. HOVER                                                       *bitwise-hover*
+
+Rest the cursor on a numeric literal in normal mode and its representations
+appear in a small window next to it, closing again as soon as you move off.
+Nothing to press.
+
+This is on by default in Neovim, where bitwise is run off the main loop so the
+editor never blocks. In Vim it uses a |popup-window| and runs bitwise
+synchronously, so it is opt-in: >
+
+    let g:bitwise_hover = 1
+<
+Turn it off with: >
+
+    let g:bitwise_hover = 0
+<
+or toggle it for the session with |:BitwiseHoverToggle|.
+
+The hover recognises hexadecimal (0x1F), binary (0b1010), octal (0o17) and
+decimal literals, along with digit separators and size suffixes, so `0xFF_u8`
+and `1_000` are understood. Identifiers that merely contain digits, such as
+`foo123`, and both halves of a float, such as `1.5`, are deliberately ignored.
+
+Results are cached per literal, so revisiting a number costs nothing.
+
+                                                       *bitwise-hover-dismiss*
+DISMISSING THE HOVER
+
+The hover is transient: it goes away by itself when you move the cursor, enter
+insert mode, open the command line, or change window. Moving on is the normal
+way to get rid of it.
+
+When it is sitting on something you want to read, dismiss it in place with
+|:BitwiseHoverClose|, or map it: >
+
+    nmap <C-w>z <Plug>(bitwise-hover-close)
+<
+A dismissal is sticky: the hover will not come back for that same literal, so
+you can keep reading. It lapses as soon as the cursor reaches a different
+number, and |:BitwiseHover| overrides it.
+
+                                                         *g:bitwise_hover_esc*
+Set this before the plugin loads to dismiss with <Esc> in normal mode: >
+
+    let g:bitwise_hover_esc = 1
+<
+Off by default, for two reasons. Mapping <Esc> in normal mode makes the editor
+wait 'ttimeoutlen' on every escape sequence -- arrow and function keys send
+one -- so a low 'ttimeoutlen' matters. And many configurations already use
+<Esc> for :nohlsearch; the plugin will not take the key if something else has
+it.
+
+                                                       *g:bitwise_hover_delay*
+How long the cursor must sit still, in milliseconds, before the hover appears.
+This is the plugin's own timer -- 'updatetime' is not involved. >
+
+    let g:bitwise_hover_delay = 250
+<
+==============================================================================
+4. COMMANDS                                                 *bitwise-commands*
+
+                                                                     *:Bitwise*
+:Bitwise [{expression}]
+        Run bitwise on {expression} and show the result. The expression may
+        contain spaces, e.g. >
+            :Bitwise 1 << 4 | 3
+<       With no argument, the word under the cursor is used.
+
+                                                                *:BitwiseHover*
+:BitwiseHover
+        Show the hover for the literal under the cursor immediately, without
+        waiting for |g:bitwise_hover_delay|. Works whether or not the
+        automatic hover is enabled.
+
+                                                          *:BitwiseHoverToggle*
+:BitwiseHoverToggle
+        Turn the automatic hover on or off for this session.
+
+                                                           *:BitwiseHoverClose*
+:BitwiseHoverClose
+        Dismiss the hover currently on screen. It stays away for the literal
+        under the cursor; see |bitwise-hover-dismiss|.
+
+==============================================================================
+5. MAPPINGS                                                 *bitwise-mappings*
+
+                                                                  *<Leader>b*
+<Leader>b{motion}
+        Operator: run bitwise on the text covered by {motion}. Examples: >
+            <Leader>biw     the word under the cursor
+            <Leader>biW     the WORD under the cursor
+            <Leader>bi(     the text inside the next ()
+            <Leader>b$      to the end of the line
+<
+{Visual}<Leader>b
+        Run bitwise on the visual selection. Characterwise, linewise and
+        blockwise selections are all supported; multi-line selections are
+        joined into a single expression.
+
+These are only created if |<Leader>|b is not already mapped. To bind your own
+keys, use the |<Plug>| mappings: >
+
+    nmap <Leader>n <Plug>(bitwise-operator)
+    xmap <Leader>n <Plug>(bitwise-operator)
+    nmap <Leader>nl <Plug>(bitwise-line)
+    nmap <Leader>nw <Plug>(bitwise-cword)
+<
+                                                    *<Plug>(bitwise-operator)*
+<Plug>(bitwise-operator)  Operator (normal) / run on selection (visual).
+                                                        *<Plug>(bitwise-line)*
+<Plug>(bitwise-line)      Run on the whole current line.
+                                                       *<Plug>(bitwise-cword)*
+<Plug>(bitwise-cword)     Run on the word under the cursor.
+                                                       *<Plug>(bitwise-hover)*
+<Plug>(bitwise-hover)     Show the hover for the literal under the cursor.
+                                                 *<Plug>(bitwise-hover-close)*
+<Plug>(bitwise-hover-close)
+                          Dismiss the hover on screen.
+
+In the output window, `q` closes it. In a Neovim float, `<Esc>` closes it too.
+
+==============================================================================
+6. CONFIGURATION                                       *bitwise-configuration*
+
+                                                       *g:bitwise_executable*
+Path to the bitwise binary. Use this to point at a local build rather than an
+installed package. >
+    let g:bitwise_executable = 'bitwise'
+    let g:bitwise_executable = expand('~/dev/bitwise/bitwise')
+<
+                                                            *g:bitwise_flags*
+Arguments passed before the expression. >
+    let g:bitwise_flags = ['--no-color']
+<
+                                                           *g:bitwise_output*
+How results are displayed:
+
+    'float'   floating window (Neovim only, the default there)
+    'split'   horizontal split at the bottom (the default in Vim)
+    'echo'    print to the message area, no window
+>
+    let g:bitwise_output = 'split'
+<
+                                                           *g:bitwise_height*
+Height of the split. 0 (the default) sizes it to the output. >
+    let g:bitwise_height = 0
+<
+                                                           *g:bitwise_border*
+Border style of the Neovim float, as accepted by |nvim_open_win()|. >
+    let g:bitwise_border = 'rounded'
+<
+                                                            *g:bitwise_hover*
+Automatic hover on the literal under the cursor; see |bitwise-hover|. Defaults
+to 1 under Neovim and 0 under Vim. >
+    let g:bitwise_hover = 1
+<
+                                                      *g:bitwise_no_mappings*
+Set to 1 to suppress the default |<Leader>|b mappings. >
+    let g:bitwise_no_mappings = 1
+<
+==============================================================================
+7. FUNCTIONS                                               *bitwise-functions*
+
+                                                            *bitwise#run()*
+bitwise#run({expr})
+        Run bitwise on {expr} and return the output as a |List| of lines.
+        Returns an empty list on failure, after showing an error message.
+
+                                                           *bitwise#show()*
+bitwise#show({expr})
+        Run bitwise on {expr} and display the result.
+
+                                                      *bitwise#available()*
+bitwise#available()
+        Return |TRUE| when the bitwise binary can be found.
+
+                                            *bitwise#number_under_cursor()*
+bitwise#number_under_cursor()
+        Return the numeric literal under the cursor, normalized for bitwise
+        (suffix and digit separators removed), or an empty string.
+
+                                                         *bitwise#hover()*
+bitwise#hover()
+        Show the hover for the literal under the cursor.
+
+==============================================================================
+8. NEOVIM                                                     *bitwise-neovim*
+
+Under Neovim the result is shown in a floating window by default; set
+|g:bitwise_output| to 'split' for the Vim behaviour.
+
+The automatic |bitwise-hover| is enabled by default and runs bitwise
+asynchronously through |jobstart()|, so a cursor stop never blocks the editor.
+
+A health check is provided: >
+    :checkhealth bitwise
+<
+It verifies that the binary is found and that |g:bitwise_output| is valid.
+
+Setup with lazy.nvim: >
+    { 'mellowcandle/vim-bitwise' }
+<
+==============================================================================
+9. TROUBLESHOOTING                                   *bitwise-troubleshooting*
+
+"'bitwise' was not found in $PATH"
+        Install bitwise, or set |g:bitwise_executable| to its full path.
+        Note that $PATH inside the editor may differ from your shell's.
+
+"bitwise exited with 1"
+        bitwise could not parse the expression. The message includes what it
+        printed on stderr.
+
+The hover never reports errors: if the literal under the cursor is something
+bitwise cannot parse, nothing is shown. Use |:Bitwise| on it to see why.
+
+The one exception is a missing binary, which would otherwise leave the hover
+looking broken with no explanation: that is reported once per session.
+
+To run the plugin's own test suite: >
+    ./test/run.sh
+<
+It runs in-process checks under both editors, plus an integration test that
+drives a real Neovim over RPC to exercise the hover (|CursorMoved| does not
+fire for a script run with -S, so the hover cannot be tested in-process).
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
